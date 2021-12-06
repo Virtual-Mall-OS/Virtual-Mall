@@ -608,13 +608,14 @@ function alert(message, type) {
 }
 function vmallDeploy(){
 
-    var vorname=document.getElementById('vorname').value;
-    var nachname=document.getElementById('nachname').value;
-	var shopname=document.getElementById('shopname').value;
-	var adresse=document.getElementById('adresse').value;
-	var telefon=document.getElementById('telefon').value;
-	var email=document.getElementById('email').value;
-	var beschreibung=document.getElementById('beschreibung').value;
+    var vorname="'"+document.getElementById('vorname').value+"'";
+    var nachname="'"+document.getElementById('nachname').value+"'";
+	var shopname="'"+document.getElementById('shopname').value+"'";
+	var adresse="'"+document.getElementById('adresse').value+"'";
+	adresse=adresse.split(',').join('-');
+	var telefon="'"+document.getElementById('telefon').value+"'";
+	var email="'"+document.getElementById('email').value+"'";
+	var beschreibung="'"+document.getElementById('beschreibung').value+"'";
 	
     $.ajax({
         type:"post",
