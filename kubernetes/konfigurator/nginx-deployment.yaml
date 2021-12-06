@@ -1,0 +1,54 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels: 
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+      tier: vmall
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: nginx
+      labels:
+        app: nginx
+        tier: vmall
+    spec:
+      containers:
+      - image: vmall/konfigurator
+        imagePullPolicy: ""
+        name: nginx
+        ports:
+        - containerPort: 80
+        resources: {}
+        lifecycle:
+            postStart:
+                exec:
+                  command:
+                    - "sh"
+                    - "-c"
+                    - |
+                      set -x 
+                      apk --update add curl 
+                      curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.9/bin/linux/amd64/kubectl 
+                      chmod +x kubectl;
+                      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
+                      chmod 700 get_helm.sh 
+                      ./get_helm.sh 
+                      tar -xvf /app.tar -C /usr/share/nginx/html/;
+        volumeMounts:
+        - name: nginx-app-volume
+          mountPath: /usr/share/nginx/html
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: nginx-app-volume
+        persistentVolumeClaim:
+          claimName: nginx-app-pvc
+status: {}

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+
+  name: php-fpm
+  labels: 
+    app: php-fpm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-fpm
+      tier: vmall  
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: php-fpm
+      labels:
+        app: php-fpm
+        tier: vmall
+    spec:
+      containers:
+      - env:
+        - name: DB_NAME
+          value: opencart
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_PASSWORD
+          value: password
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_USERNAME
+          value: opencart
+        image: vmall/php-fpm
+        imagePullPolicy: ""
+        name: php-fpm
+        ports:
+        - containerPort: 9000
+        resources: {}
+        lifecycle:
+            postStart:
+                exec:
+                  command:
+                    - "sh"
+                    - "-c"
+                    - |
+                      set -x 
+                      apk --update add curl 
+                      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 
+                      chmod 700 get_helm.sh 
+                      ./get_helm.sh
+
+        volumeMounts:
+        - name: nginx-app-volume
+          mountPath: /usr/share/nginx/html
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: nginx-app-volume
+        persistentVolumeClaim:
+          claimName: nginx-app-pvc
+status: {}

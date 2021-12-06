@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Name }}
+  name: php-fpm
+  labels: 
+    app: php-fpm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-fpm
+      tier: vmall  
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: php-fpm
+      labels:
+        app: php-fpm
+        tier: vmall
+    spec:
+      containers:
+      - env:
+        - name: DB_NAME
+          value: opencart
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_PASSWORD
+          value: password
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_USERNAME
+          value: opencart
+        image: vmall/php-fpm
+        imagePullPolicy: ""
+        name: php-fpm
+        ports:
+        - containerPort: 9000
+        resources: {}
+        volumeMounts:
+        - name: nginx-storage-volume
+          mountPath: /storage
+        - name: nginx-app-volume
+          mountPath: /usr/share/nginx/html
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: nginx-storage-volume
+        persistentVolumeClaim:
+          claimName: nginx-storage-pvc
+      - name: nginx-app-volume
+        persistentVolumeClaim:
+          claimName: nginx-app-pvc
+status: {}

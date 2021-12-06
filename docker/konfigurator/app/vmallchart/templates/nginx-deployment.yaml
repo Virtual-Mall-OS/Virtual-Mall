@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Name }}
+  name: nginx
+  labels: 
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+      tier: vmall
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: nginx
+      labels:
+        app: nginx
+        tier: vmall
+    spec:
+      containers:
+      - image: vmall/nginx
+        imagePullPolicy: ""
+        name: nginx
+        ports:
+        - containerPort: 80
+        env:
+        - name: EXTERNAL_IP
+          value: ""
+        - name: RELEASE_NAME
+          value: {{ .Release.Name }} 
+        resources: {}
+        lifecycle:
+            postStart:
+                exec:
+                  command:
+                    - "sh"
+                    - "-c"
+                    - |
+                      sleep 30;
+                      set -x
+                      apk --update add curl
+                      curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.20.9/bin/linux/amd64/kubectl
+                      chmod +x kubectl
+                      EXTERNAL_IP1="$(./kubectl -n $RELEASE_NAME get service nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+                      tar -xvf /app.tar -C /usr/share/nginx/html/;
+                      tar -xvf /storage.tar -C /storage/;
+                      sed -i "s/localhost/$EXTERNAL_IP1/g" /usr/share/nginx/html/config.php;
+                      sed -i "s/localhost/$EXTERNAL_IP1/g" /usr/share/nginx/html/admin/config.php;
+        volumeMounts:
+        - name: nginx-storage-volume
+          mountPath: /storage
+        - name: nginx-app-volume
+          mountPath: /usr/share/nginx/html
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: nginx-storage-volume
+        persistentVolumeClaim:
+          claimName: nginx-storage-pvc
+      - name: nginx-app-volume
+        persistentVolumeClaim:
+          claimName: nginx-app-pvc
+status: {}

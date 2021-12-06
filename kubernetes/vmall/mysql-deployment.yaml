@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: vmall
+  name: mysql
+  labels: 
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      tier: vmall
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+        name: mysql
+        labels:
+          app: mysql
+          tier: vmall
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_DATABASE
+          value: opencart
+        - name: MYSQL_PASSWORD
+          value: password
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        - name: MYSQL_USER
+          value: opencart 
+        image: vmall/mysql
+        imagePullPolicy: ""
+        name: mysql
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /var/lib/mysql
+          subPath: mysql
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: mysql-volume
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+status: {}

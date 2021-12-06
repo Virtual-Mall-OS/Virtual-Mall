@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: vmall
+  name: mysql
+  labels: 
+    app: mysql
+spec:
+  ports:
+  - name: "3306"
+    port: 3306
+    targetPort: 3306
+  selector:
+    app: mysql
+    tier: vmall
+status:
+  loadBalancer: {}

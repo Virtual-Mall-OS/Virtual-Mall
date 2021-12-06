@@ -1,0 +1,36 @@
+nginx:
+  build: ./nginx
+  ports:
+    - "80:80"
+  volumes:
+    - ./app:/usr/share/nginx/html/
+    - ./storage:/storage
+  links:
+    - fpm:php-fpm
+fpm:
+  image: vmall/php-fpm
+  ports:
+    - "9000"
+  volumes:
+    - ./app:/usr/share/nginx/html/
+    - ./storage:/storage
+  environment:
+    MYSQL_HOST: mysql
+    MYSQL_USERNAME: ${MYSQL_USER}
+    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    DB_NAME: ${MYSQL_DATABASE}
+    MYSQL_PORT: 3306
+  links:
+    - mysql:mysql
+mysql:
+  build: ./mysql
+  ports:
+    - "3306:3306"
+  volumes:
+    - ./mysql/data:/var/lib/mysql:rw
+  environment:
+    MYSQL_DATABASE: ${MYSQL_DATABASE}
+    MYSQL_USER: ${MYSQL_USER}
+    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    

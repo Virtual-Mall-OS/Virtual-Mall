@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Name }}
+  name: mysql
+  labels: 
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      tier: vmall
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+        name: mysql
+        labels:
+          app: mysql
+          tier: vmall
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_DATABASE
+          value: opencart
+        - name: MYSQL_PASSWORD
+          value: password
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        - name: MYSQL_USER
+          value: opencart 
+        - name: SHOPNAME
+          value: {{ .Values.shopname }}
+        - name: VORNAME
+          value: {{ .Values.vorname }}
+        - name: NACHNAME
+          value: {{ .Values.nachname }}
+        - name: ADRESSE
+          value: {{ .Values.adresse }}
+        - name: EMAIL
+          value: {{ .Values.email }}
+        - name: TELEFON
+          value: {{ .Values.telefon | quote  }}
+        - name: BESCHREIBUNG
+          value: {{ .Values.beschreibung }}
+        image: vmall/mysql
+        imagePullPolicy: ""
+        name: mysql
+        ports:
+        - containerPort: 3306
+        resources: {}
+        lifecycle:
+            postStart:
+                exec:
+                  command:
+                    - "sh"
+                    - "-c"
+                    - |
+                      sleep 20;
+                      set -x
+                      SHOPNAME="$(bash -c 'echo $SHOPNAME')"
+                      VORNAME="$(bash -c 'echo $VORNAME')"
+                      NACHNAME="$(bash -c 'echo $NACHNAME')"
+                      ADRESSE="$(bash -c 'echo $ADRESSE')"
+                      EMAIL="$(bash -c 'echo $EMAIL')"
+                      TELEFON="$(bash -c 'echo $TELEFON')"
+                      BESCHREIBUNG="$(bash -c 'echo $BESCHREIBUNG')"
+                      mysql --user=root --password=root opencart -e "UPDATE oc_user SET firstname = '$VORNAME' WHERE firstname = 'firstname'";
+                      mysql --user=root --password=root opencart -e "UPDATE oc_user SET lastname = '$NACHNAME' WHERE lastname = 'lastname'";
+                      mysql --user=root --password=root opencart -e "UPDATE oc_user SET email = '$EMAIL' WHERE email = 'email@email.com'";
+                      mysql --user=root --password=root opencart -e "UPDATE oc_setting SET value = '$SHOPNAME' WHERE value = 'storename'";
+                      mysql --user=root --password=root opencart -e "UPDATE oc_setting SET value =  '$NACHNAME' WHERE value = 'boss'";
+                      mysql --user=root --password=root opencart -e "UPDATE oc_setting SET value = '$ADRESSE' WHERE value = 'Address 1'";
+                      mysql --user=root --password=root opencart -e "UPDATE oc_setting SET value = '$EMAIL' WHERE value = 'email@email.com'";
+                      mysql --user=root --password=root opencart -e "UPDATE oc_setting SET value = '$TELEFON' WHERE value = '00101010'";
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /var/lib/mysql
+          subPath: mysql
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: mysql-volume
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+status: {}
